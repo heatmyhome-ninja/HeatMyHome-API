@@ -9,10 +9,17 @@ import cors from 'cors';
 // npm i node-fetch
 // npm i express
 // npm i cors
+// node app.js
+
+// https://expressjs.com/en/resources/middleware/cors.html
+let corsOptions = {
+    origin: ['https://jackrekirby.github.io', 'https://heatmyhome.ninja/'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
 
 const app = express();
-app.use(cors());
-app.options('*', cors());
+app.use(cors(corsOptions));
+//app.options('http://127.0.0.1:5501/index.html', cors());
 
 app.get('/', async (req, res) => {
     //console.log(req, res);
