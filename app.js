@@ -13,13 +13,13 @@ import cors from 'cors';
 
 // https://expressjs.com/en/resources/middleware/cors.html
 let corsOptions = {
-    origin: ['https://jackrekirby.github.io', 'https://heatmyhome.ninja'],
-    //origin: ['http://127.0.0.1:5501', 'https://jackrekirby.github.io', 'https://heatmyhome.ninja/'],
+    //origin: ['https://jackrekirby.github.io', 'https://heatmyhome.ninja/'],
+    origin: ['http://127.0.0.1:5500', 'https://jackrekirby.github.io', 'https://heatmyhome.ninja'],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
 const app = express();
-app.use(cors(corsOptions));
+//app.use(cors(corsOptions));
 //app.options('http://127.0.0.1:5501/index.html', cors());
 
 app.get('/', async (req, res) => {
