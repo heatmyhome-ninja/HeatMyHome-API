@@ -19,6 +19,7 @@ let corsOptions = {
 }
 
 const app = express();
+app.use(cors());
 //app.use(cors(corsOptions));
 //app.options('http://127.0.0.1:5501/index.html', cors());
 
