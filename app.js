@@ -19,16 +19,16 @@ app.get('/', async (req, res) => {
     const postcode = req.query.postcode;
     console.log('postcode: ', postcode);
     if (postcode == 'A') {
-        const t0 = performance.now();
+        //const t0 = performance.now();
         const result = '[1, 2, 3, 4]';
         //const result = await submit_simulation('HP160LU', 52.3833, -1.5833, 2, 60, 20, 3000, 0.5);
-        const t1 = performance.now();
-        console.log(`Time: ${t1 - t0} milliseconds.`);
-        res.send({ 'result': JSON.parse(result), 'time': t1 - t0 });
+        //const t1 = performance.now();
+        //console.log(`Time: ${t1 - t0} milliseconds.`);
+        res.send({ 'result': JSON.parse(result), 'time': 0 });
         //res.send('T4');
     }
     else {
-        res.send('T5');
+        res.send('T6');
     }
 
 
