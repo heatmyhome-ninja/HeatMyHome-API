@@ -1,9 +1,9 @@
 {
-  "name": "sim_api_v1",
+  "name": "epc_api_node",
   "type": "module",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

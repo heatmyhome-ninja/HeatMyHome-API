@@ -1,76 +1,103 @@
 import fetch from 'node-fetch';
+import cheerio from 'cheerio'
+
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import { run_simulation } from "./pkg/rust_simulator.js";
+
 // npm init
 // npm i cheerio
 // npm i node-fetch
 // npm i express
 // npm i cors
 // node app.js
-// "type": "module",
+
+// https://expressjs.com/en/resources/middleware/cors.html
+let corsOptions = {
+    //origin: ['https://jackrekirby.github.io', 'https://heatmyhome.ninja/'],
+    origin: ['http://127.0.0.1:5500', 'https://jackrekirby.github.io', 'https://heatmyhome.ninja'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
 
 const app = express();
 app.use(cors());
+//app.use(cors(corsOptions));
+//app.options('http://127.0.0.1:5501/index.html', cors());
 
 app.get('/', async (req, res) => {
     //console.log(req, res);
     const postcode = req.query.postcode;
-    let latitude = Number(req.query.latitude);
-    let longitude = Number(req.query.longitude);
-    console.log('postcode: ', postcode, latitude);
-    if (postcode != undefined) {
-        if (isNaN(latitude)) { latitude = 52.3833; };
-        if (isNaN(longitude)) { longitude = -1.5833; };
-        //const t0 = performance.now();
+    console.log('postcode: ', postcode);
+    const certificate = req.query.certificate;
+    console.log('certificate: ', certificate);
+    if (postcode) {
+        const address_link_list = await getAddresses(postcode);
+        //console.log(address_link_list);
+        if (address_link_list.length === 0) {
+            res.send({ 'status': 404, 'error': `postcode <${postcode}> is not valid` });
+        } else {
+            res.send({ 'status': 200, 'result': address_link_list });
+        }
+    } else if (certificate) {
+        const url_cert = 'https://find-energy-certificate.service.gov.uk/energy-certificate/' + certificate
+        const data = await getDataFromAddress(url_cert);
 
-        //const result = '[1, 2, 3, 4]';
-        const result = await submit_simulation(postcode, latitude, longitude, 2, 60, 20, 3000, 0.5);
-        //const t1 = performance.now();
-        //console.log(`Time: ${t1 - t0} milliseconds.`);
-        res.send({ 'result': JSON.parse(result), 'inputs': { 'postcode': postcode, 'latitude': latitude, 'longitude': longitude } });
-        //res.send('T4');
+        if (Object.keys(data).length === 0) {
+            res.send({ 'status': 404, 'error': `certificate <${certificate}> is not valid` });
+        } else {
+            res.send({ 'status': 200, 'result': data });
+        }
+    } else {
+        res.send({ 'status': 404, 'error': 'must provide url parameter (either ?postcode=AB123XY or ?certificate=1234-5678-1234-5678)' });
     }
-    else {
-        res.send('Simulator API: 0');
-    }
-
-
-    //console.log('DONE2');
-    //res.send(JSON.stringify(result));
 })
-
-function build_file_path(latitude, longitude, datatype) {
-    return `lat_${(Math.round(latitude * 2.0) / 2.0).toFixed(1)}_lon_${(Math.round(longitude * 2.0) / 2.0).toFixed(1)}.csv`;
-}
-
-async function read_array(filepath) {
-    const resp = await fetch(filepath);
-    const text = await resp.text();
-    return text.split(/\r?\n/).map(Number);
-}
-
-async function submit_simulation(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max) {
-    console.log(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max);
-    const ASSETS_DIR = "./assets/";
-    const agile_tariff_file_path = ASSETS_DIR + "agile_tariff.csv";
-    const outside_temps_file_path = ASSETS_DIR + "outside_temps/" + build_file_path(latitude, longitude);
-    const solar_irradiances_file_path = ASSETS_DIR + "solar_irradiances/" + build_file_path(latitude, longitude);
-    console.log(agile_tariff_file_path);
-    console.log(outside_temps_file_path);
-    console.log(solar_irradiances_file_path);
-    const agile_tariff = fs.readFileSync(agile_tariff_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const outside_temps = fs.readFileSync(outside_temps_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const solar_irradiances = fs.readFileSync(solar_irradiances_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const result = run_simulation(thermostat_temperature, latitude, longitude, num_occupants,
-        house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff, outside_temps, solar_irradiances);
-    //const result = '[1, 2, 3, 4]';
-    return result;
-}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () =>
     console.log('EPC API listening on port: ', port),
 );
 
+async function getAddresses(postcode) {
+    const url = `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${postcode.replace(' ', '+')}`;
+    let address_link_list = [];
+    const response = await fetch(url);
+    console.log('url: ', url);
+    const body = await response.text();
+    let $ = cheerio.load(body);
+    const gov_partial_url = 'https://find-energy-certificate.service.gov.uk';
+    let links = $("a.govuk-link");
+    links.each(function (i, link) {
+        let href = $(link).attr("href");
+        if (href.startsWith('/energy-certificate')) {
+            let address = $(link).text().trim();
+            const full_link = `${href.split('e/')[1]}`;
+            address_link_list.push([address, full_link]);
+            console.log(address, full_link);
+        }
+    });
+    return address_link_list;
+}
+
+async function getDataFromAddress(url) {
+    const response = await fetch(url);
+    console.log('url: ', url);
+    if (response.ok) {
+        const body = await response.text();
+        let $ = cheerio.load(body);
+        let links = $("dl.govuk-summary-list");
+
+        let floor_area_node = $("#main-content > div > div.govuk-grid-column-two-thirds.epc-domestic-sections > div.govuk-body.epc-blue-bottom.printable-area.epc-box-container > dl > div:nth-child(2) > dd")
+        let floor_area_txt = floor_area_node.text().trim();
+        console.log('Floor Area: ', floor_area_txt);
+
+        let epc_space_heating_node = $("#main-content > div > div.govuk-grid-column-two-thirds.epc-domestic-sections > div.govuk-body.epc-blue-bottom.printable-area.epc-estimated-energy-use > dl:nth-child(10) > div:nth-child(1) > dd")
+        let epc_space_heating_txt = epc_space_heating_node.text().trim();
+        console.log('Space heating: ', epc_space_heating_txt);
+
+        let valid_until_node = $("#main-content > div > div.govuk-grid-column-two-thirds.epc-domestic-sections > div.govuk-body.epc-blue-bottom.printable-area.epc-box-container > div > div.epc-extra-boxes > p:nth-child(1) > b");
+        let valid_until_txt = valid_until_node.text().trim();
+        console.log('Valid Until: ', valid_until_txt);
+        return { 'floor-area': floor_area_txt, 'space-heating': epc_space_heating_txt, 'valid-until': valid_until_txt };
+    } else {
+        return {};
+    }
+}
