@@ -26,7 +26,7 @@ app.get('/', async (req, res) => {
         res.send({ 'result': JSON.parse(result), 'time': t1 - t0 });
     }
     else {
-        res.send('Hello World');
+        res.send('T1');
     }
 
 
