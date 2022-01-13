@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
-import { run_simulation } from "../../rust_simulator/pkg/rust_simulator.js";
+import { run_simulation } from "./pkg/rust_simulator.js";
 // npm init
 // npm i cheerio
 // npm i node-fetch
@@ -38,7 +38,7 @@ async function read_array(filepath) {
 
 async function submit_simulation(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max) {
     //console.log(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max);
-    const ASSETS_DIR = "../../rust_simulator/assets/";
+    const ASSETS_DIR = "./assets/";
     const agile_tariff_file_path = ASSETS_DIR + "agile_tariff.csv";
     const outside_temps_file_path = ASSETS_DIR + "outside_temps/" + build_file_path(latitude, longitude);
     const solar_irradiances_file_path = ASSETS_DIR + "solar_irradiances/" + build_file_path(latitude, longitude);
