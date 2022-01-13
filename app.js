@@ -29,7 +29,7 @@ app.get('/', async (req, res) => {
         //res.send('T4');
     }
     else {
-        res.send('T9');
+        res.send('T10');
     }
 
 
@@ -59,9 +59,9 @@ async function submit_simulation(postcode, latitude, longitude, num_occupants, h
     const agile_tariff = fs.readFileSync(agile_tariff_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
     const outside_temps = fs.readFileSync(outside_temps_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
     const solar_irradiances = fs.readFileSync(solar_irradiances_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    //const result = run_simulation(thermostat_temperature, latitude, longitude, num_occupants,
-    //   house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff, outside_temps, solar_irradiances);
-    const result = '[1, 2, 3, 4]';
+    const result = run_simulation(thermostat_temperature, latitude, longitude, num_occupants,
+        house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff, outside_temps, solar_irradiances);
+    //const result = '[1, 2, 3, 4]';
     return result;
 }
 
