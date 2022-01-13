@@ -20,15 +20,16 @@ app.get('/', async (req, res) => {
     console.log('postcode: ', postcode);
     if (postcode == 'A') {
         //const t0 = performance.now();
-        const result = '[1, 2, 3, 4]';
-        //const result = await submit_simulation('HP160LU', 52.3833, -1.5833, 2, 60, 20, 3000, 0.5);
+
+        //const result = '[1, 2, 3, 4]';
+        const result = await submit_simulation('HP160LU', 52.3833, -1.5833, 2, 60, 20, 3000, 0.5);
         //const t1 = performance.now();
         //console.log(`Time: ${t1 - t0} milliseconds.`);
         res.send({ 'result': JSON.parse(result), 'time': 0 });
         //res.send('T4');
     }
     else {
-        res.send('T6');
+        res.send('T8');
     }
 
 
@@ -47,11 +48,11 @@ async function read_array(filepath) {
 }
 
 async function submit_simulation(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max) {
-    //console.log(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max);
-    //const ASSETS_DIR = "./assets/";
-    //const agile_tariff_file_path = ASSETS_DIR + "agile_tariff.csv";
-    //const outside_temps_file_path = ASSETS_DIR + "outside_temps/" + build_file_path(latitude, longitude);
-    //const solar_irradiances_file_path = ASSETS_DIR + "solar_irradiances/" + build_file_path(latitude, longitude);
+    console.log(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max);
+    const ASSETS_DIR = "./assets/";
+    const agile_tariff_file_path = ASSETS_DIR + "agile_tariff.csv";
+    const outside_temps_file_path = ASSETS_DIR + "outside_temps/" + build_file_path(latitude, longitude);
+    const solar_irradiances_file_path = ASSETS_DIR + "solar_irradiances/" + build_file_path(latitude, longitude);
     //console.log(agile_tariff_file_path);
     //console.log(outside_temps_file_path);
     //console.log(solar_irradiances_file_path);
