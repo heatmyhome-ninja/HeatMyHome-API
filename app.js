@@ -17,19 +17,23 @@ app.use(cors());
 app.get('/', async (req, res) => {
     //console.log(req, res);
     const postcode = req.query.postcode;
-    console.log('postcode: ', postcode);
-    if (postcode == 'A') {
+    let latitude = Number(req.query.latitude);
+    let longitude = Number(req.query.longitude);
+    console.log('postcode: ', postcode, latitude);
+    if (postcode != undefined) {
+        if (isNaN(latitude)) { latitude = 52.3833; };
+        if (isNaN(longitude)) { longitude = -1.5833; };
         //const t0 = performance.now();
 
         //const result = '[1, 2, 3, 4]';
-        const result = await submit_simulation('HP160LU', 52.3833, -1.5833, 2, 60, 20, 3000, 0.5);
+        const result = await submit_simulation(postcode, latitude, longitude, 2, 60, 20, 3000, 0.5);
         //const t1 = performance.now();
         //console.log(`Time: ${t1 - t0} milliseconds.`);
-        res.send({ 'result': JSON.parse(result), 'time': 0 });
+        res.send({ 'result': JSON.parse(result), 'inputs': { 'postcode': postcode, 'latitude': latitude, 'longitude': longitude } });
         //res.send('T4');
     }
     else {
-        res.send('T10');
+        res.send('Simulator API: 0');
     }
 
 
