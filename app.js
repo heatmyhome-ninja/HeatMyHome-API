@@ -4,9 +4,9 @@ import cheerio from 'cheerio'
 import cors from 'cors';
 import fs from 'fs';
 // localhost
-// import { run_simulation } from "./../rust_simulator/.pkg/rust_simulator.js";
+import { run_simulation } from "../../rust_simulator/pkg/rust_simulator.js"
 // server
-import { run_simulation } from "./pkg/rust_simulator.js";
+//import { run_simulation } from "./pkg/rust_simulator.js";
 
 // setup
 // npm init
@@ -54,7 +54,7 @@ app.get('/simulate', async (req, res) => {
         console.log(`Time: ${t1 - t0} milliseconds.`);
         res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(result) });
     } else {
-        let url = req.protocol + '://' + req.get('host') + req.originalUrl;
+        let url = req.get('host') + req.originalUrl;
         res.send({
             'status': 404,
             'error': `not all parameters defined. Example parameters: ${url}?postcode=CV47AL&latitude=52.3833&longitude=-1.5833&occupants=2&temperature=20&space_heating=3000&floor_area=60&tes_max=0.5`,
@@ -117,7 +117,7 @@ app.get('/epc', async (req, res) => {
             res.send({ 'status': 200, 'result': data });
         }
     } else {
-        let url = req.protocol + '://' + req.get('host') + req.originalUrl;
+        let url = req.get('host') + req.originalUrl;
         res.send({ 'status': 404, 'error': `must provide url parameter (either ${url}?postcode=CV47AL or ${url}?certificate=2808-3055-6321-9909-2974)` });
     }
 });
@@ -172,9 +172,9 @@ async function get_data_from_certificate(url) {
 // OTHER
 
 app.get('/', async (req, res) => {
-    let url = req.protocol + '://' + req.get('host') + req.originalUrl;
+    let url = req.get('host') + req.originalUrl;
     console.log();
-    res.send({ 'status': 404, 'error': `must call ${url}epc or ${url}simulate with their respective url parameters` });
+    res.send({ 'status': 404, 'error': `must call ${url}epc or ${url}simulate with their respective url parameters`, 'info': 'API Version 0.1' });
 });
 
 const port = process.env.PORT || 3000;
