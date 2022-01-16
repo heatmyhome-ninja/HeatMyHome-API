@@ -6,8 +6,10 @@ import fs from 'fs';
 // localhost
 //import { run_simulation } from "../../rust_simulator/pkg/rust_simulator.js"
 // server
+// REMOVE PERFORMANCE!
 import { run_simulation } from "./pkg/rust_simulator.js";
 
+const API_VERSION = 0.2;
 // setup
 // npm init
 // npm i cheerio
@@ -47,11 +49,11 @@ app.get('/simulate', async (req, res) => {
 
     if (!undefined_parameter) {
         console.log('parameters: ', p);
-        const t0 = performance.now();
+        //const t0 = performance.now();
         const result = await submit_simulation(p.postcode, p.latitude, p.longitude,
             p.occupants, p.floor_area, p.temperature, p.space_heating, p.tes_max);
-        const t1 = performance.now();
-        console.log(`Time: ${t1 - t0} milliseconds.`);
+        //const t1 = performance.now();
+        //console.log(`Time: ${t1 - t0} milliseconds.`);
         res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(result) });
     } else {
         let url = req.get('host') + req.originalUrl;
@@ -174,7 +176,7 @@ async function get_data_from_certificate(url) {
 app.get('/', async (req, res) => {
     let url = req.get('host') + req.originalUrl;
     console.log();
-    res.send({ 'status': 404, 'error': `must call ${url}epc or ${url}simulate with their respective url parameters`, 'info': 'API Version 0.1' });
+    res.send({ 'status': 404, 'error': `must call ${url}epc or ${url}simulate with their respective url parameters`, 'info': `API Version ${API_VERSION}` });
 });
 
 const port = process.env.PORT || 3000;
