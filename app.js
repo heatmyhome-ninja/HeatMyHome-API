@@ -3,8 +3,10 @@ import express from 'express';
 import cheerio from 'cheerio'
 import cors from 'cors';
 import fs from 'fs';
-import { run_simulation } from "../../rust_simulator/pkg/rust_simulator.js";
-
+// localhost
+// import { run_simulation } from "./../rust_simulator/.pkg/rust_simulator.js";
+// server
+import { run_simulation } from "./pkg/rust_simulator.js";
 
 // setup
 // npm init
