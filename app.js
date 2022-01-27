@@ -9,7 +9,7 @@ import fs from 'fs';
 // REMOVE PERFORMANCE!
 import { run_simulation } from "./pkg/sim_lib.js";
 
-const API_VERSION = 0.3;
+const API_VERSION = 0.4;
 // setup
 // npm init
 // npm i cheerio
