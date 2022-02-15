@@ -4,7 +4,7 @@ import cheerio from 'cheerio'
 import cors from 'cors';
 import Worker from 'web-worker';
 
-const API_VERSION = 0.6;
+const API_VERSION = 0.7;
 // setup
 // npm init
 // npm i cheerio
