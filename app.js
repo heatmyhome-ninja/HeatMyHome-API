@@ -4,7 +4,7 @@ import cheerio from 'cheerio'
 import cors from 'cors';
 import Worker from 'web-worker';
 
-const API_VERSION = 0.7;
+const API_VERSION = 0.8;
 // setup
 // npm init
 // npm i cheerio
@@ -46,10 +46,10 @@ app.get('/simulate', async (req, res) => {
         if (!undefined_parameter) {
             console.log('parameters: ', p);
 
-            if (isNaN(p.floor_area) || p.floor_area < 25 || p.floor_area > 999) {
+            if (isNaN(p.floor_area) || p.floor_area < 25 || p.floor_area > 500) {
                 res.send({
                     'status': 404,
-                    'error': `The floor area is set to: ${p.floor_area}. This is either not a number, less than 25 m^2, or greater than 999m^2`,
+                    'error': `The floor area is set to: ${p.floor_area}. This is either not a number, less than 25 m^2, or greater than 500m^2`,
                     'inputs': p
                 });
             } else if (isNaN(p.tes_max) || p.tes_max < 0.1 || p.tes_max > 3.0) {
@@ -59,7 +59,7 @@ app.get('/simulate', async (req, res) => {
                     'inputs': p
                 });
             } else {
-                let max_run_time = 6000;
+                let max_run_time = 5000;
                 let sim_complete = false;
 
                 const url = new URL('./webworker.cjs', import.meta.url);
