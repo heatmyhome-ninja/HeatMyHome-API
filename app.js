@@ -4,7 +4,7 @@ import cheerio from 'cheerio'
 import cors from 'cors';
 import Worker from 'web-worker';
 
-const API_VERSION = 0.5;
+const API_VERSION = 0.6;
 // setup
 // npm init
 // npm i cheerio
@@ -45,31 +45,46 @@ app.get('/simulate', async (req, res) => {
 
         if (!undefined_parameter) {
             console.log('parameters: ', p);
-            let max_run_time = 5000;
 
-            const url = new URL('./webworker.cjs', import.meta.url);
-            const worker = new Worker(url);
-            let sim_data = "timeout";
+            if (isNaN(p.floor_area) || p.floor_area < 25 || p.floor_area > 999) {
+                res.send({
+                    'status': 404,
+                    'error': `The floor area is set to: ${p.floor_area}. This is either not a number, less than 25 m^2, or greater than 999m^2`,
+                    'inputs': p
+                });
+            } else if (isNaN(p.tes_max) || p.tes_max < 0.1 || p.tes_max > 3.0) {
+                res.send({
+                    'status': 404,
+                    'error': `The tes-max is set to: ${p.tes_max}. This is either not a number, less than 0.1 m^3, or greater than 3.0m^3`,
+                    'inputs': p
+                });
+            } else {
+                let max_run_time = 10000;
 
-            worker.addEventListener('message', e => {
-                // res.send({ 'worker': e.data });
-                sim_data = e.data;
-            });
+                const url = new URL('./webworker.cjs', import.meta.url);
+                const worker = new Worker(url);
+                let sim_data = "timeout";
 
-            worker.postMessage(p);
+                worker.addEventListener('message', e => {
+                    // res.send({ 'worker': e.data });
+                    sim_data = e.data;
+                });
 
-            setTimeout(() => {
-                worker.terminate();
-                if (sim_data == "timeout") {
-                    res.send({
-                        'status': 404,
-                        'error': `simulation exceed maximum runtime allowed: ${max_run_time} ms. Try a smaller TES volume or floor area.`,
-                        'inputs': p
-                    });
-                } else {
-                    res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(sim_data) });
-                }
-            }, max_run_time);
+                worker.postMessage(p);
+
+                setTimeout(() => {
+                    worker.terminate();
+                    if (sim_data == "timeout") {
+                        res.send({
+                            'status': 404,
+                            'error': `simulation exceed maximum runtime allowed: ${max_run_time} ms. Try a smaller TES volume or floor area.`,
+                            'inputs': p
+                        });
+                    } else {
+                        res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(sim_data) });
+                    }
+                }, max_run_time);
+            }
         } else {
             let url = req.get('host') + req.originalUrl;
             res.send({
