@@ -59,31 +59,34 @@ app.get('/simulate', async (req, res) => {
                     'inputs': p
                 });
             } else {
-                let max_run_time = 10000;
+                let max_run_time = 6000;
+                let sim_complete = false;
 
                 const url = new URL('./webworker.cjs', import.meta.url);
                 const worker = new Worker(url);
-                let sim_data = "timeout";
 
                 worker.addEventListener('message', e => {
                     // res.send({ 'worker': e.data });
-                    sim_data = e.data;
+                    sim_complete = true;
+                    res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(e.data) });
+                    worker.terminate();
+                    clearTimeout(simulation_timeout);
+                    console.log("simulation complete");
                 });
 
-                worker.postMessage(p);
-
-                setTimeout(() => {
-                    worker.terminate();
-                    if (sim_data == "timeout") {
+                let simulation_timeout = setTimeout(() => {
+                    console.log("simulation timeout");
+                    if (!sim_complete) {
+                        worker.terminate();
                         res.send({
                             'status': 404,
                             'error': `simulation exceed maximum runtime allowed: ${max_run_time} ms. Try a smaller TES volume or floor area.`,
                             'inputs': p
                         });
-                    } else {
-                        res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(sim_data) });
                     }
                 }, max_run_time);
+
+                worker.postMessage(p);
             }
         } else {
             let url = req.get('host') + req.originalUrl;
