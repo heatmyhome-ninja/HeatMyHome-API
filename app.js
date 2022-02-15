@@ -2,20 +2,16 @@ import fetch from 'node-fetch';
 import express from 'express';
 import cheerio from 'cheerio'
 import cors from 'cors';
-import fs from 'fs';
-// localhost
-//import { run_simulation } from "../../rust_simulator/pkg/sim_lib.js"
-// server
-// REMOVE PERFORMANCE!
-import { run_simulation } from "./pkg/sim_lib.js";
+import Worker from 'web-worker';
 
-const API_VERSION = 0.4;
+const API_VERSION = 0.5;
 // setup
 // npm init
 // npm i cheerio
 // npm i node-fetch
 // npm i express
 // npm i cors
+// npm i web-worker
 // node app.js
 // "type": "module",
 
@@ -25,103 +21,107 @@ app.use(cors());
 // ==============================================================================================================================
 // SIMULATE API
 
-// postcode=CV47AL&latitude=52.3833&longitude=-1.5833&occupants=2&temperature=20&space_heating=3000&floor_area=60&tes_max=0.5
 app.get('/simulate', async (req, res) => {
-    //console.log(req, res);
-    const p = {
-        'postcode': req.query.postcode,
-        'latitude': req.query.latitude,
-        'longitude': req.query.longitude,
-        'occupants': req.query.occupants,
-        'temperature': req.query.temperature,
-        'space_heating': req.query.space_heating,
-        'floor_area': req.query.floor_area,
-        'tes_max': req.query.tes_max,
-    };
+    try {
+        //console.log(req, res);
+        const p = {
+            'postcode': req.query.postcode,
+            'latitude': req.query.latitude,
+            'longitude': req.query.longitude,
+            'occupants': req.query.occupants,
+            'temperature': req.query.temperature,
+            'space_heating': req.query.space_heating,
+            'floor_area': req.query.floor_area,
+            'tes_max': req.query.tes_max,
+        };
 
-    let undefined_parameter = false;
-    for (const [parameter, value] of Object.entries(p)) {
-        if (value == undefined) {
-            undefined_parameter = true;
+        let undefined_parameter = false;
+        for (const [parameter, value] of Object.entries(p)) {
+            if (value == undefined) {
+                undefined_parameter = true;
+            }
+            console.log(parameter, value);
         }
-        console.log(parameter, value);
-    }
 
-    if (!undefined_parameter) {
-        console.log('parameters: ', p);
-        //const t0 = performance.now();
-        const result = await submit_simulation(p.postcode, p.latitude, p.longitude,
-            p.occupants, p.floor_area, p.temperature, p.space_heating, p.tes_max);
-        //const t1 = performance.now();
-        //console.log(`Time: ${t1 - t0} milliseconds.`);
-        console.log('result', result);
-        res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(result) });
-    } else {
-        let url = req.get('host') + req.originalUrl;
+        if (!undefined_parameter) {
+            console.log('parameters: ', p);
+            let max_run_time = 5000;
+
+            const url = new URL('./webworker.cjs', import.meta.url);
+            const worker = new Worker(url);
+            let sim_data = "timeout";
+
+            worker.addEventListener('message', e => {
+                // res.send({ 'worker': e.data });
+                sim_data = e.data;
+            });
+
+            worker.postMessage(p);
+
+            setTimeout(() => {
+                worker.terminate();
+                if (sim_data == "timeout") {
+                    res.send({
+                        'status': 404,
+                        'error': `simulation exceed maximum runtime allowed: ${max_run_time} ms. Try a smaller TES volume or floor area.`,
+                        'inputs': p
+                    });
+                } else {
+                    res.send({ 'status': 200, 'inputs': p, 'result': JSON.parse(sim_data) });
+                }
+            }, max_run_time);
+        } else {
+            let url = req.get('host') + req.originalUrl;
+            res.send({
+                'status': 404,
+                'error': `not all parameters defined. Example parameters: ${url}?postcode=CV47AL&latitude=52.3833&longitude=-1.5833&occupants=2&temperature=20&space_heating=3000&floor_area=60&tes_max=0.5`,
+                'inputs': p
+            });
+        }
+    } catch (error) {
         res.send({
             'status': 404,
-            'error': `not all parameters defined. Example parameters: ${url}?postcode=CV47AL&latitude=52.3833&longitude=-1.5833&occupants=2&temperature=20&space_heating=3000&floor_area=60&tes_max=0.5`,
-            'inputs': p
+            'error': `An unhandled error occured. ${error}`,
         });
     }
 });
-
-function build_file_path(latitude, longitude, datatype) {
-    return `lat_${(Math.round(latitude * 2.0) / 2.0).toFixed(1)}_lon_${(Math.round(longitude * 2.0) / 2.0).toFixed(1)}.csv`;
-}
-
-async function read_array(filepath) {
-    const resp = await fetch(filepath);
-    const text = await resp.text();
-    return text.split(/\r?\n/).map(Number);
-}
-
-async function submit_simulation(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max) {
-    console.log(postcode, latitude, longitude, num_occupants, house_size, thermostat_temperature, epc_space_heating, tes_volume_max);
-    const ASSETS_DIR = "./assets/";
-    const agile_tariff_file_path = ASSETS_DIR + "agile_tariff.csv";
-    const outside_temps_file_path = ASSETS_DIR + "outside_temps/" + build_file_path(latitude, longitude);
-    const solar_irradiances_file_path = ASSETS_DIR + "solar_irradiances/" + build_file_path(latitude, longitude);
-    console.log(agile_tariff_file_path);
-    console.log(outside_temps_file_path);
-    console.log(solar_irradiances_file_path);
-    const agile_tariff = fs.readFileSync(agile_tariff_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const outside_temps = fs.readFileSync(outside_temps_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const solar_irradiances = fs.readFileSync(solar_irradiances_file_path, { encoding: 'utf8', flag: 'r' }).split(/\r?\n/).map(Number);
-    const result = run_simulation(thermostat_temperature, latitude, longitude, num_occupants,
-        house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff, outside_temps, solar_irradiances);
-    return result;
-}
 
 // =================================================================================================================================
 // EPC API
 
 app.get('/epc', async (req, res) => {
-    //console.log(req, res);
-    const postcode = req.query.postcode;
-    console.log('postcode: ', postcode);
-    const certificate = req.query.certificate;
-    console.log('certificate: ', certificate);
-    if (postcode) {
-        const address_link_list = await get_addresses(postcode);
-        //console.log(address_link_list);
-        if (address_link_list.length === 0) {
-            res.send({ 'status': 404, 'error': `postcode <${postcode}> is not valid` });
-        } else {
-            res.send({ 'status': 200, 'result': address_link_list });
-        }
-    } else if (certificate) {
-        const url_cert = 'https://find-energy-certificate.service.gov.uk/energy-certificate/' + certificate
-        const data = await get_data_from_certificate(url_cert);
+    try {
+        //console.log(req, res);
+        const postcode = req.query.postcode;
+        console.log('postcode: ', postcode);
+        const certificate = req.query.certificate;
+        console.log('certificate: ', certificate);
+        if (postcode) {
+            const address_link_list = await get_addresses(postcode);
+            //console.log(address_link_list);
+            if (address_link_list.length === 0) {
+                res.send({ 'status': 404, 'error': `postcode <${postcode}> is not valid` });
+            } else {
+                res.send({ 'status': 200, 'result': address_link_list });
+            }
+        } else if (certificate) {
+            const url_cert = 'https://find-energy-certificate.service.gov.uk/energy-certificate/' + certificate
+            const data = await get_data_from_certificate(url_cert);
 
-        if (Object.keys(data).length === 0) {
-            res.send({ 'status': 404, 'error': `certificate <${certificate}> is not valid` });
+            if (Object.keys(data).length === 0) {
+                res.send({ 'status': 404, 'error': `certificate <${certificate}> is not valid` });
+            } else {
+                res.send({ 'status': 200, 'result': data });
+            }
         } else {
-            res.send({ 'status': 200, 'result': data });
+            let url = req.get('host') + req.originalUrl;
+            res.send({ 'status': 404, 'error': `must provide url parameter (either ${url}?postcode=CV47AL or ${url}?certificate=2808-3055-6321-9909-2974)` });
         }
-    } else {
-        let url = req.get('host') + req.originalUrl;
-        res.send({ 'status': 404, 'error': `must provide url parameter (either ${url}?postcode=CV47AL or ${url}?certificate=2808-3055-6321-9909-2974)` });
+    } catch (error) {
+        res.send({
+            'status': 404,
+            'error': `An unhandled error occured. ${error}`,
+        });
     }
 });
 
