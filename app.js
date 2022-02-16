@@ -59,7 +59,7 @@ app.get('/simulate', async (req, res) => {
                     'inputs': p
                 });
             } else {
-                let max_run_time = 5000;
+                let max_run_time = 30000;
                 let sim_complete = false;
 
                 const url = new URL('./webworker.cjs', import.meta.url);
@@ -80,7 +80,7 @@ app.get('/simulate', async (req, res) => {
                         worker.terminate();
                         res.send({
                             'status': 404,
-                            'error': `simulation exceed maximum runtime allowed: ${max_run_time} ms. Try a smaller TES volume or floor area.`,
+                            'error': `simulation exceeded allowed runtime: ${max_run_time} ms. Server may be busy.`,
                             'inputs': p
                         });
                     }
