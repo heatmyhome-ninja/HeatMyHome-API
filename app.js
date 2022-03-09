@@ -4,7 +4,7 @@ import cheerio from 'cheerio'
 import cors from 'cors';
 import Worker from 'web-worker';
 
-const API_VERSION = 0.9;
+const API_VERSION = 1.0;
 // setup
 // npm init
 // npm i cheerio
@@ -16,7 +16,11 @@ const API_VERSION = 0.9;
 // "type": "module",
 
 const app = express();
-app.use(cors());
+// app.use(cors());
+
+app.use(cors({
+    origin: ['https://heatmyhome.ninja', 'https://jackrekirby.github.io']
+}));
 
 // ==============================================================================================================================
 // SIMULATE API
@@ -89,7 +93,7 @@ app.get('/simulate', async (req, res) => {
                 worker.postMessage(p);
             }
         } else {
-            let url = req.get('host') + req.originalUrl;
+            let url = req.get('host') + req.baseUrl + req.path;
             res.send({
                 'status': 404,
                 'error': `not all parameters defined. Example parameters: ${url}?postcode=CV47AL&latitude=52.3833&longitude=-1.5833&occupants=2&temperature=20&space_heating=3000&floor_area=60&tes_max=0.5`,
@@ -132,7 +136,7 @@ app.get('/epc', async (req, res) => {
                 res.send({ 'status': 200, 'result': data });
             }
         } else {
-            let url = req.get('host') + req.originalUrl;
+            let url = req.get('host') + req.baseUrl + req.path;
             res.send({ 'status': 404, 'error': `must provide url parameter (either ${url}?postcode=CV47AL or ${url}?certificate=2808-3055-6321-9909-2974)` });
         }
     } catch (error) {
@@ -193,7 +197,7 @@ async function get_data_from_certificate(url) {
 // OTHER
 
 app.get('/', async (req, res) => {
-    let url = req.get('host') + req.originalUrl;
+    let url = req.get('host') + req.baseUrl + req.path;
     console.log();
     res.send({ 'status': 404, 'error': `must call ${url}epc or ${url}simulate with their respective url parameters`, 'info': `API Version ${API_VERSION}` });
 });
