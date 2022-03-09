@@ -12,6 +12,7 @@
 * @param {Float32Array} agile_tariff_per_hour_over_year
 * @param {Float32Array} hourly_outside_temperatures_over_year
 * @param {Float32Array} hourly_solar_irradiances_over_year
+* @param {boolean} enable_optimisation
 * @returns {string}
 */
-export function run_simulation(thermostat_temperature: number, latitude: number, longitude: number, num_occupants: number, house_size: number, postcode: string, epc_space_heating: number, tes_volume_max: number, agile_tariff_per_hour_over_year: Float32Array, hourly_outside_temperatures_over_year: Float32Array, hourly_solar_irradiances_over_year: Float32Array): string;
+export function run_simulation(thermostat_temperature: number, latitude: number, longitude: number, num_occupants: number, house_size: number, postcode: string, epc_space_heating: number, tes_volume_max: number, agile_tariff_per_hour_over_year: Float32Array, hourly_outside_temperatures_over_year: Float32Array, hourly_solar_irradiances_over_year: Float32Array, enable_optimisation: boolean): string;

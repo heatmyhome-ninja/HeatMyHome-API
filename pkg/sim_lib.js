@@ -137,9 +137,10 @@ function getInt32Memory0() {
 * @param {Float32Array} agile_tariff_per_hour_over_year
 * @param {Float32Array} hourly_outside_temperatures_over_year
 * @param {Float32Array} hourly_solar_irradiances_over_year
+* @param {boolean} enable_optimisation
 * @returns {string}
 */
-module.exports.run_simulation = function(thermostat_temperature, latitude, longitude, num_occupants, house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff_per_hour_over_year, hourly_outside_temperatures_over_year, hourly_solar_irradiances_over_year) {
+module.exports.run_simulation = function(thermostat_temperature, latitude, longitude, num_occupants, house_size, postcode, epc_space_heating, tes_volume_max, agile_tariff_per_hour_over_year, hourly_outside_temperatures_over_year, hourly_solar_irradiances_over_year, enable_optimisation) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(postcode, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -150,7 +151,7 @@ module.exports.run_simulation = function(thermostat_temperature, latitude, longi
         var len2 = WASM_VECTOR_LEN;
         var ptr3 = passArrayF32ToWasm0(hourly_solar_irradiances_over_year, wasm.__wbindgen_malloc);
         var len3 = WASM_VECTOR_LEN;
-        wasm.run_simulation(retptr, thermostat_temperature, latitude, longitude, num_occupants, house_size, ptr0, len0, epc_space_heating, tes_volume_max, ptr1, len1, ptr2, len2, ptr3, len3);
+        wasm.run_simulation(retptr, thermostat_temperature, latitude, longitude, num_occupants, house_size, ptr0, len0, epc_space_heating, tes_volume_max, ptr1, len1, ptr2, len2, ptr3, len3, enable_optimisation);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         return getStringFromWasm0(r0, r1);
@@ -165,12 +166,12 @@ module.exports.__wbindgen_string_new = function(arg0, arg1) {
     return addHeapObject(ret);
 };
 
-module.exports.__wbg_log_3445347661d4505e = function(arg0) {
-    console.log(getObject(arg0));
-};
-
 module.exports.__wbindgen_object_drop_ref = function(arg0) {
     takeObject(arg0);
+};
+
+module.exports.__wbg_log_3445347661d4505e = function(arg0) {
+    console.log(getObject(arg0));
 };
 
 module.exports.__wbindgen_throw = function(arg0, arg1) {
